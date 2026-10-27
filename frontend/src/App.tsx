@@ -18,8 +18,13 @@ type Stats = {
 }
 
 const api = axios.create({ baseURL: '/api' })
-
-const statuses = ['new', 'paid', 'shipped', 'cancelled']
+const statuses = ['new', 'paid', 'shipped', 'cancelled'] as const
+const statusLabel: Record<string, string> = {
+  new: 'NEW',
+  paid: 'PAID',
+  shipped: 'SHIPPED',
+  cancelled: 'CANCEL',
+}
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -68,32 +73,34 @@ function App() {
   }
 
   return (
-    <div className="shell">
-      <header>
+    <div className="yard">
+      <div className="hazard" aria-hidden />
+      <header className="mast">
         <div>
-          <h1>OrderDesk</h1>
-          <p className="muted">Мини-админка заказов · React + PHP API</p>
+          <p className="stamp">warehouse control</p>
+          <h1>ORDERDESK</h1>
         </div>
+        <p className="tag">Приём · оплата · отгрузка</p>
       </header>
 
-      <section className="stats">
-        <div className="stat">
-          <span>Заказы</span>
-          <strong>{stats?.orders ?? '—'}</strong>
+      <section className="meters">
+        <div>
+          <span>ORDERS</span>
+          <strong>{stats?.orders ?? 0}</strong>
         </div>
-        <div className="stat">
-          <span>Выручка</span>
-          <strong>{stats ? stats.revenue.toFixed(2) : '—'}</strong>
+        <div>
+          <span>REVENUE</span>
+          <strong>{stats ? stats.revenue.toFixed(0) : 0}</strong>
         </div>
-        <div className="stat accent">
-          <span>Оплачено</span>
-          <strong>{stats?.paid ?? '—'}</strong>
+        <div className="hot">
+          <span>PAID</span>
+          <strong>{stats?.paid ?? 0}</strong>
         </div>
       </section>
 
-      <form className="card" onSubmit={onCreate}>
+      <form className="dock" onSubmit={onCreate}>
         <h2>Новый заказ</h2>
-        <div className="row">
+        <div className="fields">
           <label>
             Клиент
             <input value={customer} onChange={(e) => setCustomer(e.target.value)} required />
@@ -104,70 +111,41 @@ function App() {
           </label>
           <label>
             Сумма
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
+            <input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
           </label>
           <label>
             Статус
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
               {statuses.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
+                <option key={s} value={s}>{statusLabel[s]}</option>
               ))}
             </select>
           </label>
         </div>
-        <button type="submit">Создать</button>
+        <button type="submit">CREATE ORDER</button>
       </form>
 
-      <section className="card">
-        <h2>Список заказов</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Клиент</th>
-              <th>Товар</th>
-              <th>Сумма</th>
-              <th>Статус</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => (
-              <tr key={o.id}>
-                <td>#{o.id}</td>
-                <td>{o.customer}</td>
-                <td>{o.product}</td>
-                <td>{Number(o.amount).toFixed(2)}</td>
-                <td>
-                  <select
-                    value={o.status}
-                    onChange={(e) => setOrderStatus(o.id, e.target.value)}
-                  >
-                    {statuses.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <button type="button" className="danger" onClick={() => removeOrder(o.id)}>
-                    Удалить
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section className="manifest">
+        <h2>Манифест заказов</h2>
+        <div className="list">
+          {orders.map((o) => (
+            <article key={o.id} className={`row status-${o.status}`}>
+              <div className="id">#{o.id}</div>
+              <div>
+                <strong>{o.customer}</strong>
+                <p>{o.product}</p>
+              </div>
+              <div className="amt">{Number(o.amount).toFixed(2)}</div>
+              <select value={o.status} onChange={(e) => setOrderStatus(o.id, e.target.value)}>
+                {statuses.map((s) => (
+                  <option key={s} value={s}>{statusLabel[s]}</option>
+                ))}
+              </select>
+              <button type="button" onClick={() => removeOrder(o.id)}>SCRAP</button>
+            </article>
+          ))}
+          {orders.length === 0 && <p className="empty">Склад пуст — создай первый заказ.</p>}
+        </div>
       </section>
     </div>
   )
